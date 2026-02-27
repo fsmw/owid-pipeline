@@ -102,8 +102,16 @@ Add the following:
 FLASK_ENV=production
 SECRET_KEY=your-secure-random-secret-key-here
 APPLICATION_ROOT=/pipeline
+PORT=5050
 GITHUB_TOKEN=your_github_token_optional
 ```
+
+**Environment Variables:**
+- `FLASK_ENV`: Set to `production` for deployment
+- `SECRET_KEY`: Random secret key for session security
+- `APPLICATION_ROOT`: Base URL path (e.g., `/pipeline`) when behind reverse proxy
+- `PORT`: Port for gunicorn (default: 5000)
+- `GITHUB_TOKEN`: Optional, increases GitHub API rate limits
 
 Generate a secure secret key:
 ```bash
@@ -321,6 +329,7 @@ export FLASK_ENV=development|production
 export SECRET_KEY=your-secret-key
 export FLASK_DEBUG=1  # Development only
 export APPLICATION_ROOT=/pipeline  # Base URL path when behind reverse proxy
+export PORT=5050  # Port for gunicorn (production, default: 5000)
 export GITHUB_TOKEN=your_github_personal_access_token  # Increases API rate limits
 export OWID_CATALOG_CACHE_TTL=3600  # Cache dataset list for 1 hour
 export OWID_METADATA_CACHE_TTL=86400  # Cache metadata for 24 hours

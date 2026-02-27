@@ -4,6 +4,8 @@
 # 2. Create symlink: ln -s /etc/nginx/sites-available/owid-cleaner /etc/nginx/sites-enabled/
 # 3. Test: nginx -t
 # 4. Reload: systemctl reload nginx
+#
+# NOTE: Make sure the port matches PORT in /opt/owid-cleaner/.env
 
 server {
     listen 80;
@@ -14,8 +16,8 @@ server {
         # Remove /pipeline prefix before passing to Flask
         rewrite ^/pipeline(/.*)$ $1 break;
         
-        # Pass to Flask app running on port 5000
-        proxy_pass http://127.0.0.1:5000;
+        # Pass to Flask app (change port if needed, must match PORT in .env)
+        proxy_pass http://127.0.0.1:5050;
         
         # Set headers so Flask knows the original URL
         proxy_set_header Host $host;
