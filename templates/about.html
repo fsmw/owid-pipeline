@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}About - OWID Cleaner{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-6">About OWID Dataset Cleaner</h1>
+        
+        <div class="prose prose-lg max-w-none">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">What is this?</h2>
+            <p class="text-gray-700 mb-6">
+                OWID Dataset Cleaner is a web application that helps researchers, analysts, and data enthusiasts 
+                easily search, filter, and download datasets from <a href="https://ourworldindata.org" class="text-blue-600 hover:underline" target="_blank">Our World in Data</a>.
+            </p>
+            
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Features</h2>
+            <ul class="list-disc list-inside text-gray-700 mb-6 space-y-2">
+                <li>🔍 <strong>Search</strong> through all OWID datasets by keywords</li>
+                <li>🌍 <strong>Filter by countries</strong> using preset groups (G7, G20, EU, etc.) or custom selection</li>
+                <li>📅 <strong>Filter by time</strong> using preset periods or custom year ranges</li>
+                <li>📊 <strong>Preview</strong> filtered data before downloading</li>
+                <li>⬇️ <strong>Download</strong> cleaned CSV files ready for analysis</li>
+                <li>✨ <strong>Clean UI</strong> designed for modern workflows</li>
+            </ul>
+            
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">How to Use</h2>
+            <ol class="list-decimal list-inside text-gray-700 mb-6 space-y-2">
+                <li>Search for a dataset using keywords (e.g., "climate", "population", "covid")</li>
+                <li>Click on a dataset card to view details and filtering options</li>
+                <li>Apply filters using preset groups or custom selections</li>
+                <li>Preview the filtered data to verify it meets your needs</li>
+                <li>Download the cleaned CSV file</li>
+            </ol>
+            
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Preset Filters</h2>
+            
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Country Groups</h3>
+            <ul class="list-disc list-inside text-gray-700 mb-4 ml-4 space-y-1">
+                <li><strong>G7</strong>: United States, Canada, United Kingdom, France, Germany, Italy, Japan</li>
+                <li><strong>G20</strong>: All G20 member countries</li>
+                <li><strong>EU</strong>: European Union member states</li>
+                <li><strong>BRICS</strong>: Brazil, Russia, India, China, South Africa</li>
+                <li><strong>Latin America</strong>: Latin American countries</li>
+                <li><strong>Africa</strong>: African countries</li>
+                <li><strong>Asia-Pacific</strong>: Asia-Pacific countries</li>
+            </ul>
+            
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Time Periods</h3>
+            <ul class="list-disc list-inside text-gray-700 mb-6 ml-4 space-y-1">
+                <li><strong>Last 5 years</strong></li>
+                <li><strong>Last 10 years</strong></li>
+                <li><strong>Last 20 years</strong></li>
+                <li><strong>21st Century</strong>: 2000 to present</li>
+                <li><strong>By decade</strong>: 2020s, 2010s, 2000s</li>
+            </ul>
+            
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Data Source</h2>
+            <p class="text-gray-700 mb-6">
+                All data comes from <a href="https://ourworldindata.org" class="text-blue-600 hover:underline" target="_blank">Our World in Data</a>, 
+                a scientific online publication that focuses on large global problems such as poverty, disease, 
+                hunger, climate change, war, existential risks, and inequality.
+            </p>
+            
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Technology Stack</h2>
+            <ul class="list-disc list-inside text-gray-700 mb-6 space-y-1">
+                <li>Backend: Flask (Python)</li>
+                <li>Frontend: Tailwind CSS + Alpine.js</li>
+                <li>Data Processing: Pandas</li>
+                <li>Data Source: OWID GitHub Repository</li>
+            </ul>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-8">
+                <p class="text-blue-800">
+                    <strong>Note:</strong> This is an independent tool and is not officially affiliated with Our World in Data. 
+                    We simply make their excellent data more accessible through filtering and cleaning utilities.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

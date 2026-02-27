@@ -1,0 +1,29 @@
+# Example nginx configuration for OWID Cleaner behind /pipeline
+# 
+# 1. Copy this file to /etc/nginx/sites-available/owid-cleaner
+# 2. Create symlink: ln -s /etc/nginx/sites-available/owid-cleaner /etc/nginx/sites-enabled/
+# 3. Test: nginx -t
+# 4. Reload: systemctl reload nginx
+
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Serve OWID Cleaner under /pipeline
+    location /pipeline {
+        # Remove /pipeline prefix before passing to Flask
+        rewrite ^/pipeline(/.*)$ $1 break;
+        
+        # Pass to Flask app running on port 5000
+        proxy_pass http://127.0.0.1:5000;
+        
+        # Set headers so Flask knows the original URL
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Important: Tell Flask about the base path
+        proxy_set_header SCRIPT_NAME /pipeline;
+    }
+}

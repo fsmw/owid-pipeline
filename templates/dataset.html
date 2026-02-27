@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}{{ dataset.title }} - OWID Cleaner{% endblock %}
+
+{% block extra_css %}
+<!-- Grid.js CSS -->
+<link href="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/theme/mermaid.min.css" rel="stylesheet" />
+<style>
+    /* Custom Grid.js styling to match our design */
+    .gridjs-wrapper {
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    .gridjs-table {
+        font-size: 0.875rem;
+    }
+    .gridjs-th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+    .gridjs-search-input {
+        border-radius: 0.375rem;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem 0.75rem;
+    }
+    .gridjs-pagination {
+        margin-top: 1rem;
+    }
+    .gridjs-pages button {
+        border-radius: 0.375rem;
+        margin: 0 0.125rem;
+    }
+    .gridjs-pages button.gridjs-currentPage {
+        background-color: #2563eb;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="datasetApp()" x-init="init()">
+    <!-- Dataset Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="mb-4">
+            <a href="javascript:history.back()" class="text-blue-600 hover:text-blue-700 flex items-center">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Search
+            </a>
+        </div>
+
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ dataset.title }}</h1>
+        <p class="text-gray-600">Dataset ID: <code class="bg-gray-100 px-2 py-1 rounded">{{ dataset.slug }}</code></p>
+
+        <!-- Data Not Available Warning -->
+        {% if not dataset.data_available %}
+        <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div class="flex">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div class="ml-3">
+                    <h3 class="text-yellow-800 font-medium">Dataset Not Available for Download</h3>
+                    <p class="text-yellow-700 mt-1">
+                        This dataset does not have downloadable data. Please visit
+                        <a href="https://ourworldindata.org/grapher/{{ dataset.slug }}" target="_blank" class="underline">Our World in Data</a>
+                        to explore this data.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Filters Panel -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
+                <h2 class="text-xl font-semibold mb-4">Filters</h2>
+                
+                <!-- Country Presets -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Country Groups</label>
+                    <select
+                        x-model="filters.preset_country"
+                        @change="updatePreview()"
+                        {% if not dataset.data_available %}disabled{% endif %}
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                        <option value="">Custom selection</option>
+                        {% for preset in presets.country %}
+                        <option value="{{ preset }}">{{ preset.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Time Presets -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
+                    <select
+                        x-model="filters.preset_time"
+                        @change="updatePreview()"
+                        {% if not dataset.data_available %}disabled{% endif %}
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                        <option value="">Custom range</option>
+                        {% for preset in presets.time %}
+                        <option value="{{ preset }}">{{ preset.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Custom Year Range -->
+                <div class="mb-6" x-show="!filters.preset_time">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Custom Year Range</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input
+                            type="number"
+                            x-model.number="filters.start_year"
+                            @input.debounce.500ms="updatePreview()"
+                            placeholder="Start"
+                            {% if not dataset.data_available %}disabled{% endif %}
+                            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                        <input
+                            type="number"
+                            x-model.number="filters.end_year"
+                            @input.debounce.500ms="updatePreview()"
+                            placeholder="End"
+                            {% if not dataset.data_available %}disabled{% endif %}
+                            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                    </div>
+                </div>
+
+                <!-- Preview Button -->
+                <button
+                    @click="updatePreview()"
+                    :disabled="loading || !dataAvailable"
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                >
+                    <span x-show="!loading">Apply Filters</span>
+                    <span x-show="loading">Loading...</span>
+                </button>
+
+                <!-- Download Button -->
+                <button
+                    @click="downloadCSV()"
+                    :disabled="!hasPreview || downloading || !dataAvailable"
+                    class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span x-show="!downloading">Download CSV</span>
+                    <span x-show="downloading">Downloading...</span>
+                </button>
+                
+                <!-- Stats -->
+                <div x-show="hasPreview" x-cloak class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-semibold text-gray-700 mb-2">Filtered Data Stats</h3>
+                    <p class="text-sm text-gray-600">
+                        <strong x-text="preview.row_count"></strong> rows × 
+                        <strong x-text="preview.column_count"></strong> columns
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview Panel -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Data Preview</h2>
+                
+                <!-- Loading State -->
+                <div x-show="loading" x-cloak class="text-center py-12">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <p class="mt-4 text-gray-600">Loading preview...</p>
+                </div>
+                
+                <!-- Error State -->
+                <div x-show="error" x-cloak class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p class="text-red-700" x-text="error"></p>
+                </div>
+                
+                <!-- Preview Table with Grid.js -->
+                <div x-show="hasPreview && !loading" x-cloak>
+                    <!-- Column Info -->
+                    <div class="mb-4">
+                        <h3 class="font-semibold text-gray-700 mb-2">Available Columns</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="col in preview.columns" :key="col.name">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                    <span x-text="col.name"></span>
+                                    <span class="text-blue-600 ml-1" x-text="`(${col.type})`"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Grid.js Table Container -->
+                    <div id="dataGrid" class="w-full"></div>
+                    
+                    <p class="text-sm text-gray-500 mt-4">
+                        Showing all filtered data. Use the search box above to filter, click column headers to sort.
+                    </p>
+                </div>
+                
+                <!-- Initial State -->
+                <div x-show="!hasPreview && !loading && !error" x-cloak class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Apply Filters to Preview Data</h3>
+                    <p class="text-gray-600">Select filters and click "Apply Filters" to see a preview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function datasetApp() {
+    return {
+        slug: '{{ dataset.slug }}',
+        loading: false,
+        downloading: false,
+        error: null,
+        hasPreview: false,
+        dataAvailable: {{ 'true' if dataset.data_available else 'false' }},
+        filters: {
+            preset_country: '',
+            preset_time: '',
+            start_year: null,
+            end_year: null,
+            countries: [],
+            columns: []
+        },
+        preview: {
+            row_count: 0,
+            column_count: 0,
+            columns: [],
+            preview: []
+        },
+
+        init() {
+            // Only load preview if data is available
+            if (this.dataAvailable) {
+                this.updatePreview();
+            }
+        },
+
+        async updatePreview() {
+            // Don't try to load if data is not available
+            if (!this.dataAvailable) {
+                this.error = {
+                    type: 'not_available',
+                    message: 'This dataset does not have downloadable data.'
+                };
+                return;
+            }
+
+            this.loading = true;
+            this.error = null;
+
+            try {
+                // Clean up empty string values
+                const cleanFilters = {};
+                for (const [key, value] of Object.entries(this.filters)) {
+                    if (value !== '' && value !== null && !(Array.isArray(value) && value.length === 0)) {
+                        cleanFilters[key] = value;
+                    }
+                }
+
+                const response = await axios.post(`${APP_BASE_URL}/api/dataset/${this.slug}/preview`, cleanFilters);
+                this.preview = response.data;
+                this.hasPreview = true;
+                
+                // Initialize Grid.js after data is loaded
+                this.$nextTick(() => {
+                    if (this.preview.columns && this.preview.preview) {
+                        initDataGrid(this.preview.columns, this.preview.preview);
+                    }
+                });
+            } catch (err) {
+                const errorData = err.response?.data;
+                if (errorData?.data_available === false || err.response?.status === 404) {
+                    this.error = {
+                        type: 'not_available',
+                        message: errorData?.message || 'This dataset is not available for download.'
+                    };
+                    this.dataAvailable = false;
+                } else {
+                    this.error = {
+                        type: 'error',
+                        message: errorData?.error || errorData?.message || 'Failed to load preview'
+                    };
+                }
+                console.error('Preview error:', err);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async downloadCSV() {
+            if (!this.dataAvailable) {
+                this.error = {
+                    type: 'not_available',
+                    message: 'This dataset does not have downloadable data.'
+                };
+                return;
+            }
+
+            this.downloading = true;
+            this.error = null;
+
+            try {
+                // Clean up empty string values
+                const cleanFilters = {};
+                for (const [key, value] of Object.entries(this.filters)) {
+                    if (value !== '' && value !== null && !(Array.isArray(value) && value.length === 0)) {
+                        cleanFilters[key] = value;
+                    }
+                }
+
+                const response = await axios.post(
+                    `${APP_BASE_URL}/api/dataset/${this.slug}/download`,
+                    cleanFilters,
+                    { responseType: 'blob' }
+                );
+
+                // Get filename from Content-Disposition header or use default
+                const contentDisposition = response.headers['content-disposition'];
+                let filename = `${this.slug}_filtered.csv`;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                }
+
+                // Create download link with correct MIME type
+                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+
+            } catch (err) {
+                const errorData = err.response?.data;
+                if (errorData?.data_available === false || err.response?.status === 404) {
+                    this.error = {
+                        type: 'not_available',
+                        message: errorData?.message || 'This dataset is not available for download.'
+                    };
+                    this.dataAvailable = false;
+                } else {
+                    this.error = {
+                        type: 'error',
+                        message: 'Failed to download dataset'
+                    };
+                }
+                console.error('Download error:', err);
+            } finally {
+                this.downloading = false;
+            }
+        }
+    }
+}
+
+// Grid.js initialization function
+let dataGrid = null;
+
+function initDataGrid(columns, data) {
+    // Destroy existing grid if any
+    if (dataGrid) {
+        dataGrid.destroy();
+    }
+    
+    // Format columns for Grid.js
+    const gridColumns = columns.map(col => ({
+        id: col.name,
+        name: col.name,
+        sort: true,
+        formatter: (cell) => {
+            // Format null/undefined values
+            if (cell === null || cell === undefined || cell === '') {
+                return gridjs.html('<span class="text-gray-400">-</span>');
+            }
+            // Format numbers with commas
+            if (typeof cell === 'number') {
+                return cell.toLocaleString();
+            }
+            return cell;
+        }
+    }));
+    
+    // Format data for Grid.js (array of arrays)
+    const gridData = data.map(row => 
+        columns.map(col => row[col.name] !== undefined ? row[col.name] : null)
+    );
+    
+    // Create Grid.js instance
+    dataGrid = new gridjs.Grid({
+        columns: gridColumns,
+        data: gridData,
+        search: {
+            enabled: true,
+            placeholder: 'Search in data...'
+        },
+        sort: true,
+        pagination: false,
+        language: {
+            search: {
+                placeholder: 'Search in data...'
+            },
+            pagination: {
+                previous: '←',
+                next: '→',
+                showing: 'Showing',
+                results: 'results',
+                of: 'of',
+                to: 'to'
+            }
+        },
+        className: {
+            table: 'gridjs-table',
+            th: 'gridjs-th',
+            search: 'gridjs-search',
+            pagination: 'gridjs-pagination'
+        },
+        style: {
+            table: {
+                width: '100%'
+            }
+        },
+        resizable: true
+    }).render(document.getElementById('dataGrid'));
+}
+</script>
+
+<!-- Grid.js -->
+<script src="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/gridjs.umd.js"></script>
+{% endblock %}

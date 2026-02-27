@@ -1,0 +1,17 @@
+[Unit]
+Description=OWID Dataset Cleaner Flask Application
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/owid-cleaner
+Environment="PATH=/opt/owid-cleaner/venv/bin"
+EnvironmentFile=/opt/owid-cleaner/.env
+ExecStart=/opt/owid-cleaner/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 --timeout 120 app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
